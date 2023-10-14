@@ -20,15 +20,15 @@ type ShortUrl struct {
 	Shortened string    `json:"goly" gorm:"unique;not null"`
 	Clicked   uint64    `json:"clicked"`
 	ExpiredAt time.Time `json:"expired_at" gorm:"not null"`
-	UserID    uint64    `json:"user_id" gorm:"not null"`
+	UserID    uint64    `json:"user_id"`
+	User      User      `gorm:"foreignkey:UserID"`
 }
 type User struct {
-	ID                uint       `json:"id" gorm:"primaryKey"`
-	Username          string     `json:"username"`
-	HashedPassword    string     `json:"hashed_password" gorm:"not null"`
-	PasswordChangedAt time.Time  `json:"password_changed_at" gorm:"not null;default:'0001-01-01 00:00:00Z'"`
-	CreatedAt         time.Time  `json:"created_at" gorm:"not null;default:now()"`
-	ShortUrls         []ShortUrl `json:"short_urls" gorm:"foreignKey:UserID"`
+	ID                uint64    `json:"id" gorm:"primaryKey"`
+	Username          string    `json:"username"`
+	HashedPassword    string    `json:"hashed_password" gorm:"not null"`
+	PasswordChangedAt time.Time `json:"password_changed_at" gorm:"not null;default:'0001-01-01 00:00:00Z'"`
+	CreatedAt         time.Time `json:"created_at" gorm:"not null;default:now()"`
 }
 
 func Setup(config Config) {
@@ -43,4 +43,5 @@ func Setup(config Config) {
 	if err != nil {
 		fmt.Println(err)
 	}
+
 }
