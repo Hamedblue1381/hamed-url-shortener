@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/Hamedblue1381/hamed-url-shortener/util"
 	"github.com/gin-gonic/gin"
@@ -24,9 +25,10 @@ func ShortenURL(originalURL string, userID uint64) (string, error) {
 
 	// Store the URL mapping with the shortened URL.
 	shortURL := ShortUrl{
-		Redirect:  originalURL,
-		Shortened: shortenedURL,
-		UserID:    userID,
+		Redirect:     originalURL,
+		Shortened:    shortenedURL,
+		UserID:       userID,
+		LastAccessed: time.Now(),
 	}
 
 	result = db.Create(&shortURL)
@@ -42,16 +44,16 @@ func RedirectURL(shortenedURL string, c *gin.Context) (string, error) {
 	// Retrieve the original URL from the database.
 	originalURL, err := getOriginalURL(shortenedURL)
 	if err != nil {
-		return "", err
+		return "Not found: ", err
 	}
 
 	if err := db.Model(&ShortUrl{}).Where("shortened = ?", shortenedURL).Update("clicked", gorm.Expr("clicked + ?", 1)).Error; err != nil {
-		return "", err
+		return "Error: ", err
 	}
 	// Extract and append query parameters to the original URL.
 	originalURLWithParams, err := appendQueryParameters(originalURL, getQueryParameters(c.Request.URL))
 	if err != nil {
-		return "", err
+		return "Failed to append url parameters: ", err
 	}
 
 	return originalURLWithParams, nil
@@ -86,10 +88,12 @@ func getOriginalURL(shortenedURL string) (string, error) {
 	result := db.Where("shortened = ?", shortenedURL).First(&shortURL)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return "", fmt.Errorf("shortened url not found")
+			return "Error: ", fmt.Errorf("shortened url not found")
 		}
-		return "", result.Error
+		return "Error getting the original url: ", result.Error
 	}
+	shortURL.LastAccessed = time.Now()
+	db.Save(&shortURL)
 
 	return shortURL.Redirect, nil
 }
