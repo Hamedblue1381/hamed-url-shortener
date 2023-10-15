@@ -17,7 +17,7 @@ type Config struct {
 type ShortUrl struct {
 	ID           uint64    `json:"id" gorm:"primaryKey"`
 	Redirect     string    `json:"redirect" gorm:"not null"`
-	Shortened    string    `json:"goly" gorm:"unique;not null"`
+	Shortened    string    `json:"goly" gorm:"unique;not null;index"`
 	Clicked      uint64    `json:"clicked"`
 	UserID       uint64    `json:"user_id"`
 	User         User      `gorm:"foreignkey:UserID"`
