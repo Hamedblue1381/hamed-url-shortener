@@ -15,13 +15,13 @@ type Config struct {
 	DBSource string `mapstructure:"DB_SOURCE"`
 }
 type ShortUrl struct {
-	ID        uint64    `json:"id" gorm:"primaryKey"`
-	Redirect  string    `json:"redirect" gorm:"not null"`
-	Shortened string    `json:"goly" gorm:"unique;not null"`
-	Clicked   uint64    `json:"clicked"`
-	ExpiredAt time.Time `json:"expired_at" gorm:"not null"`
-	UserID    uint64    `json:"user_id"`
-	User      User      `gorm:"foreignkey:UserID"`
+	ID           uint64    `json:"id" gorm:"primaryKey"`
+	Redirect     string    `json:"redirect" gorm:"not null"`
+	Shortened    string    `json:"goly" gorm:"unique;not null"`
+	Clicked      uint64    `json:"clicked"`
+	UserID       uint64    `json:"user_id"`
+	User         User      `gorm:"foreignkey:UserID"`
+	LastAccessed time.Time `gorm:"not null;"`
 }
 type User struct {
 	ID                uint64    `json:"id" gorm:"primaryKey"`
@@ -44,4 +44,15 @@ func Setup(config Config) {
 		fmt.Println(err)
 	}
 
+	go func() {
+		for {
+			cleanupStaleURLs(db)
+			time.Sleep(24 * time.Hour) // Run the cleanup task once a day
+		}
+	}()
+
+}
+func cleanupStaleURLs(db *gorm.DB) {
+	oneYearAgo := time.Now().AddDate(-1, 0, 0)
+	db.Where("last_accessed < ?", oneYearAgo).Delete(&ShortUrl{})
 }
