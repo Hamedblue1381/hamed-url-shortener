@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/Hamedblue1381/hamed-url-shortener/util"
@@ -11,7 +12,11 @@ import (
 	"gorm.io/gorm"
 )
 
+var mu sync.Mutex
+
 func ShortenURL(originalURL string, userID uint64) (string, error) {
+	mu.Lock()
+	defer mu.Unlock()
 	var count int64
 	result := db.Model(&ShortUrl{}).Where("user_id = ?", userID).Count(&count)
 	if result.Error != nil {
@@ -23,7 +28,6 @@ func ShortenURL(originalURL string, userID uint64) (string, error) {
 	}
 	shortenedURL := util.RandomURL(6)
 
-	// Store the URL mapping with the shortened URL.
 	shortURL := ShortUrl{
 		Redirect:     originalURL,
 		Shortened:    shortenedURL,
