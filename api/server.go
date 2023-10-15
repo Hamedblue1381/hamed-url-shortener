@@ -46,7 +46,7 @@ func (server *Server) setUpRouter() {
 	}
 
 	router.GET(":shortenedURL", server.RedirectShortURL)
-	router.GET("/views/:shortenedURL", GetShortUrlViews)
+	router.GET("/:shortenedURL/views", GetShortUrlViews)
 
 	server.router = router
 
